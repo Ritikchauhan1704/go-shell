@@ -7,7 +7,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"sort"
 	"os/exec"
 )
 
@@ -49,16 +48,16 @@ func main() {
 }
 
 func extProg(argv []string) {
-	_,exists := FindInPath(argv[0])
+	path, exists := FindInPath(argv[0])
 	if exists  {
-		cmd := strings.Join(argv," ")
-		execCmd := exec.Command(cmd)
-		_,err := execCmd.Output()
-		if err != nil {
+		cmd := exec.Command(path, argv[1:]...)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Stdin = os.Stdin
+		if err := cmd.Run(); err != nil {
 			fmt.Fprintln(os.Stderr, "Error executing command:", err)
 		}
-		
-
+	
 	} else {
 		fmt.Printf("%s: command not found\n", argv[0])
 	}
@@ -86,16 +85,12 @@ func typFun(argv []string) {
 }
 
 func FindInPath(bin string) (string, bool) {
-	paths := os.Getenv("PATH")
-	arr := strings.Split(paths, ":")
-	sort.Strings(arr)
-	for _, path := range arr{
-		file := path + "/" + bin
-		if _, err := os.Stat(file); err == nil {
-			return file, true
-		}
-	}
-	return "", false
+	// this will tell if the command exists in the path or not
+    path, err := exec.LookPath(bin)
+    if err != nil {
+        return "", false
+    }
+    return path, true
 }
 
 
