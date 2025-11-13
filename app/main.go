@@ -36,6 +36,8 @@ func main() {
 			shell.ExitCmd(argv)
 		case "pwd":
 			shell.Pwd()
+		case "cd":
+			shell.Cd(argv)
 		default:
 			shell.ExtProg(argv)
 

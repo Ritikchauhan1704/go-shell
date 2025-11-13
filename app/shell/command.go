@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 )
-var builtIns = map[string]bool{"type":true, "echo":true, "exit":true, "pwd":true}
+var builtIns = map[string]bool{"type":true, "echo":true, "exit":true, "pwd":true,"cd":true}
 
 
 func TypFun(argv []string) {
@@ -101,5 +101,28 @@ func Pwd(){
 	dir,err := filepath.Abs(".")
 	if err==nil {
 		fmt.Println(dir)
+	}
+}
+
+func Cd(argv []string){
+	if len(argv)< 2{
+		return
+	}
+	if argv[1] == "~" {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "cd: could not find home directory")
+			return
+		}
+		err = os.Chdir(homeDir)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "cd: %s: No such file or directory\n", homeDir)
+		}
+		return
+	}
+	path := argv[1]
+	err := os.Chdir(path)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "cd: %s: No such file or directory\n", path)
 	}
 }
