@@ -8,8 +8,9 @@ import (
 	"strconv"
 	"strings"
 )
-var builtIns = map[string]bool{"type":true, "echo":true, "exit":true, "pwd":true,"cd":true}
 
+var builtIns = map[string]bool{"type": true, "echo": true, "exit": true, "pwd": true}
+var extCmd = map[string]bool{"cat": true}
 
 func TypFun(argv []string) {
 
@@ -20,10 +21,10 @@ func TypFun(argv []string) {
 	val := argv[1]
 
 	if builtIns[val] {
-		fmt.Printf("%s is a shell builtin\n",val)
+		fmt.Printf("%s is a shell builtin\n", val)
 		return
 	}
-	if file, exists := FindInPath(val); exists{
+	if file, exists := FindInPath(val); exists {
 		fmt.Printf("%s is %s\n", val, file)
 		return
 	}
@@ -32,14 +33,14 @@ func TypFun(argv []string) {
 }
 
 func FindInPath(bin string) (string, bool) {
-	if file,exec := isExectutable(bin); exec {
+	if file, exec := isExectutable(bin); exec {
 		return file, true
 	}
 	paths := os.Getenv("PATH")
 	arr := strings.Split(paths, ":")
 	for _, path := range arr {
-		fullpath := filepath.Join(path,bin)
-		if file,err:=isExectutable(fullpath); err {
+		fullpath := filepath.Join(path, bin)
+		if file, err := isExectutable(fullpath); err {
 			return file, true
 		}
 		if _, err := os.Stat(fullpath); err == nil {
@@ -48,7 +49,6 @@ func FindInPath(bin string) (string, bool) {
 	}
 	return "", false
 }
-
 
 func ExitCmd(argv []string) {
 	code := 0
@@ -66,18 +66,31 @@ func EchoCmd(argv []string) {
 	fmt.Println(output)
 }
 
-
-
 func ExtProg(argv []string) {
-	path,exists := isExectutable(argv[0])
-	if exists  {
-		cmd := exec.Command(path,argv[1:]...)
+	if extCmd[argv[0]] {
+		cmd := exec.Command(argv[0], argv[1:]...)
 		// cmd.Args = argv.Args // Set argv to use original command name as argv[0]
 		cmd.Args = argv
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {
+
+			fmt.Fprintln(os.Stderr, "Error executing command:", err)
+		}
+		return
+	}
+
+	path, exists := isExectutable(argv[0])
+	if exists || builtIns[path] {
+		cmd := exec.Command(path, argv[1:]...)
+		// cmd.Args = argv.Args // Set argv to use original command name as argv[0]
+		cmd.Args = argv
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+
 			fmt.Fprintln(os.Stderr, "Error executing command:", err)
 		}
 
@@ -87,25 +100,25 @@ func ExtProg(argv []string) {
 
 }
 
-func isExectutable(filePath string) (string,bool) {
-	
+func isExectutable(filePath string) (string, bool) {
+
 	// this will tell if the command exists in the path or not
-    path, err := exec.LookPath(filePath)
-    if err != nil {
-        return "", false
-    }
-    return path, true
+	path, err := exec.LookPath(filePath)
+	if err != nil {
+		return "", false
+	}
+	return path, true
 }
 
-func Pwd(){
-	dir,err := filepath.Abs(".")
-	if err==nil {
+func Pwd() {
+	dir, err := filepath.Abs(".")
+	if err == nil {
 		fmt.Println(dir)
 	}
 }
 
-func Cd(argv []string){
-	if len(argv)< 2{
+func Cd(argv []string) {
+	if len(argv) < 2 {
 		return
 	}
 	if argv[1] == "~" {
@@ -126,3 +139,61 @@ func Cd(argv []string){
 		fmt.Fprintf(os.Stderr, "cd: %s: No such file or directory\n", path)
 	}
 }
+
+func PrintArg(argv []string) {
+	for _, arg := range argv {
+		fmt.Println(arg)
+	}
+
+}
+
+func SplitCmd(command string) []string {
+	s := []string{}
+	for _,ch := range command{
+		if ch == '"'{
+			s = charSplit(command,'"')
+			return s
+		}else if ch =='\''{
+			s = charSplit(command,'\'')
+			return s
+		}
+	}
+	s = charSplit(command,'\'')
+	return s
+}
+
+func charSplit(command string, ch byte) []string {
+
+	s := []string{}
+	flag := false
+	curr := ""
+	n := len(command)
+	for i := 0; i < n-1; i++ {
+
+		if command[i] == ' ' && !flag {
+		
+			if curr != "" {
+				s = append(s, curr)
+				curr = ""
+			}
+		
+		} else if command[i] == ch {
+		
+			flag = !flag
+		
+		} else {
+			curr += string(command[i])
+		}
+
+	}
+		
+		if curr != "" {
+		s = append(s, curr)
+		}
+		
+		return s
+
+	
+}	
+
+

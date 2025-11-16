@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"strings"
 "github.com/ShwetaRoy17/go-shell/app/shell" 
 )
 
@@ -24,7 +23,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		argv := strings.Fields(command)
+		argv := shell.SplitCmd(command)
 		cmd := argv[0]
 
 		switch cmd {
