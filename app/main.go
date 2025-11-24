@@ -23,22 +23,22 @@ func main() {
 			os.Exit(1)
 		}
 
-		argv := shell.SplitCmd(command)
+		argv,writeToFile,desc,mode := shell.SplitCmd(command)
 		cmd := argv[0]
 
 		switch cmd {
 		case "type":
-			shell.TypFun(argv)
+			shell.TypFun(argv,writeToFile,desc,mode)
 		case "echo":
-			shell.EchoCmd(argv)
+			shell.EchoCmd(argv,writeToFile,desc,mode)
 		case "exit":
-			shell.ExitCmd(argv)
+			shell.ExitCmd(argv,writeToFile,desc,mode)
 		case "pwd":
-			shell.Pwd()
+			shell.Pwd(argv[len(argv)-1],writeToFile,desc,mode)
 		case "cd":
-			shell.Cd(argv)
+			shell.Cd(argv,writeToFile,desc,mode)
 		default:
-			shell.ExtProg(argv)
+			shell.ExtProg(argv,writeToFile,desc,mode)
 
 
 		}
