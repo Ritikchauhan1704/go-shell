@@ -148,50 +148,49 @@ func PrintArg(argv []string) {
 }
 
 func SplitCmd(command string) []string {
-	s := []string{}
-	for _, ch := range command {
-		if ch == '"' {
-			s = charSplit(command, '"')
-			return s
-		} else if ch == '\'' {
-			s = charSplit(command, '\'')
-			return s
-		}
-	}
-	s = charSplit(command, '\'')
+	
+	s := charSplit(command)
 	return s
 }
 
 var escCh = map[byte]bool{'"': true, '\\': true, '$': true, '`': true}
 
-func charSplit(command string, ch byte) []string {
+func charSplit(command string) []string {
 
 	s := []string{}
-	flag := false
+	singleQ, doubleQ, esc := false, false, false
 	curr := ""
 	n := len(command)
 	for i := 0; i < n-1; i++ {
-		if command[i] == ' ' && !flag {
-			if curr != "" {
+		ch := command[i]
+
+		if esc && doubleQ {
+			if !escCh[ch] {
+				curr += "\\"
+
+			}
+			curr += string(ch)
+			esc = false
+		}else if esc{
+			esc = false
+			curr += string(ch)
+		}else if ch =='\'' && !doubleQ{
+			singleQ = !singleQ
+		}else if ch == '"' && !singleQ{
+			doubleQ = !doubleQ
+		}else if ch == '\\' && !singleQ{
+			esc = true
+		}else if ch == ' ' && !singleQ && !doubleQ{
+			if curr!="" {
 				s = append(s, curr)
 				curr = ""
 			}
-
-		} else if command[i] == ch {
-
-			flag = !flag
-
-		} else if command[i] == '\\' {
-			if !flag || (ch == '"' && escCh[command[i]]) {
-				i++
-				curr += string(command[i])
-			} else {
-				curr += "\\"
-			}
-
-		} else {
-			curr += string(command[i])
+		}else {
+			curr += (string)(ch)
 		}
+
+
+		
 
 	}
 
